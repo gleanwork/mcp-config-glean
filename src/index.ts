@@ -301,12 +301,18 @@ export function normalizeGleanServerName(
   const lowerName = name.toLowerCase();
 
   // If it already starts with the prefix, return as-is
-  if (lowerName === productPrefix || lowerName.startsWith(`${productPrefix}_`)) {
+  if (
+    lowerName === productPrefix ||
+    lowerName.startsWith(`${productPrefix}_`)
+  ) {
     return lowerName;
   }
 
   // Handle case where name starts with just the product (e.g., 'gleancustom' -> 'glean_custom')
-  if (lowerName.startsWith(productPrefix) && lowerName.length > productPrefix.length) {
+  if (
+    lowerName.startsWith(productPrefix) &&
+    lowerName.length > productPrefix.length
+  ) {
     const rest = lowerName.slice(productPrefix.length);
     return `${productPrefix}_${rest}`;
   }
