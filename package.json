@@ -1,0 +1,46 @@
+{
+  "name": "@gleanwork/mcp-config",
+  "version": "1.0.0",
+  "description": "Glean-specific MCP configuration defaults and helpers",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --fix",
+    "test": "vitest run",
+    "test:all": "npm run lint && npm run typecheck && npm run test",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "glean",
+    "configuration"
+  ],
+  "author": "Glean",
+  "license": "MIT",
+  "dependencies": {
+    "@gleanwork/mcp-config-schema": "file:../mcp-config-schema"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "eslint": "^9.28.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3",
+    "vitest": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
