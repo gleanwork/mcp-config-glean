@@ -53,8 +53,12 @@ describe('@gleanwork/mcp-config', () => {
     });
 
     it('serverNameBuilder delegates to buildGleanServerName', () => {
-      expect(GLEAN_REGISTRY_OPTIONS.serverNameBuilder?.({ transport: 'stdio' })).toBe('glean_local');
-      expect(GLEAN_REGISTRY_OPTIONS.serverNameBuilder?.({ transport: 'http' })).toBe('glean_default');
+      expect(GLEAN_REGISTRY_OPTIONS.serverNameBuilder?.({ transport: 'stdio' })).toBe(
+        'glean_local'
+      );
+      expect(GLEAN_REGISTRY_OPTIONS.serverNameBuilder?.({ transport: 'http' })).toBe(
+        'glean_default'
+      );
       expect(
         GLEAN_REGISTRY_OPTIONS.serverNameBuilder?.({
           transport: 'http',
