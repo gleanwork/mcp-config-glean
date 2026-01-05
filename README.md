@@ -45,9 +45,10 @@ const httpConfig = builder.buildConfiguration({
 ```typescript
 import { GLEAN_REGISTRY_OPTIONS, GLEAN_ENV } from '@gleanwork/mcp-config';
 
-// Registry options for stdio transport
-GLEAN_REGISTRY_OPTIONS.serverPackage  // '@gleanwork/local-mcp-server'
-GLEAN_REGISTRY_OPTIONS.cliPackage     // '@gleanwork/configure-mcp-server'
+// Registry options for Glean MCP server
+GLEAN_REGISTRY_OPTIONS.serverPackage    // '@gleanwork/local-mcp-server'
+GLEAN_REGISTRY_OPTIONS.commandBuilder   // Functions to generate CLI commands
+GLEAN_REGISTRY_OPTIONS.serverNameBuilder // Callback that prefixes server names with glean_
 
 // Environment variable names
 GLEAN_ENV.INSTANCE   // 'GLEAN_INSTANCE'
@@ -64,6 +65,46 @@ GLEAN_ENV.API_TOKEN  // 'GLEAN_API_TOKEN'
 | `createGleanUrlEnv(url, apiToken?)` | Create env vars using full URL |
 | `createGleanHeaders(apiToken)` | Create Authorization header |
 | `buildGleanServerUrl(instance, endpoint?)` | Build Glean MCP server URL |
+| `normalizeGleanProductName(productName?)` | Normalize product name for white-labeling (defaults to 'glean') |
+| `buildGleanServerName(options)` | Build server name with glean_ prefix |
+| `normalizeGleanServerName(name, productName?)` | Normalize server name to safe config key with prefix |
+
+#### Server Name Functions
+
+These functions handle server name generation with proper prefixing:
+
+```typescript
+import {
+  normalizeGleanProductName,
+  buildGleanServerName,
+  normalizeGleanServerName,
+} from '@gleanwork/mcp-config';
+
+// Normalize product names for white-labeling
+normalizeGleanProductName();              // 'glean'
+normalizeGleanProductName('Acme Corp');   // 'acme_corp'
+
+// Build server names with glean_ prefix
+buildGleanServerName({ transport: 'stdio' });                              // 'glean_local'
+buildGleanServerName({ transport: 'http' });                               // 'glean_default'
+buildGleanServerName({ transport: 'http', serverUrl: '.../mcp/analytics' }); // 'glean_analytics'
+buildGleanServerName({ serverName: 'custom' });                            // 'glean_custom'
+buildGleanServerName({ agents: true });                                    // 'glean_agents'
+
+// Normalize existing server names
+normalizeGleanServerName('custom');        // 'glean_custom'
+normalizeGleanServerName('glean_custom');  // 'glean_custom' (no double prefix)
+```
+
+#### Types
+
+```typescript
+import type { GleanConnectionOptions, GleanEnvVars } from '@gleanwork/mcp-config';
+
+// GleanConnectionOptions extends MCPConnectionOptions with:
+// - productName?: string  (for white-label support)
+// - agents?: boolean      (use agents endpoint)
+```
 
 ### Re-exports
 
