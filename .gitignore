@@ -1,4 +1,11 @@
 node_modules/
 dist/
-*.tsbuildinfo
+coverage/
+*.log
 .DS_Store
+*.backup.*
+.env
+.env.local
+.vscode/
+.idea/
+.mise.local.toml
