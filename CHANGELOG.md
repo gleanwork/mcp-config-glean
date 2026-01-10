@@ -1,4 +1,14 @@
 
+
+## v2.0.1 (2026-01-10)
+
+#### :bug: Bug Fix
+* [#4](https://github.com/gleanwork/mcp-config/pull/4) Update mcp-config-schema to ^3.1.1 ([@steve-calvert-glean](https://github.com/steve-calvert-glean))
+
+#### Committers: 1
+- Steve Calvert ([@steve-calvert-glean](https://github.com/steve-calvert-glean))
+
+
 ## v2.0.0 (2026-01-09)
 
 #### :boom: Breaking Change
