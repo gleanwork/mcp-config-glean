@@ -116,7 +116,9 @@ describe('Client: codex', () => {
           env: createGleanEnv('my-company', 'my-api-token'),
         });
 
-        expect(command).toMatchInlineSnapshot(`"codex mcp add glean_local --env GLEAN_INSTANCE=my-company --env GLEAN_API_TOKEN=my-api-token -- npx -y @gleanwork/local-mcp-server"`);
+        expect(command).toMatchInlineSnapshot(
+          `"codex mcp add glean_local --env GLEAN_INSTANCE=my-company --env GLEAN_API_TOKEN=my-api-token -- npx -y @gleanwork/local-mcp-server"`
+        );
       });
     });
 
@@ -128,7 +130,9 @@ describe('Client: codex', () => {
           headers: createGleanHeaders('my-api-token'),
         });
 
-        expect(command).toMatchInlineSnapshot(`"codex mcp add --url https://my-company-be.glean.com/mcp/default glean_default"`);
+        expect(command).toMatchInlineSnapshot(
+          `"codex mcp add --url https://my-company-be.glean.com/mcp/default glean_default"`
+        );
       });
     });
   });

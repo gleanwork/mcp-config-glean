@@ -119,7 +119,9 @@ describe('Client: vscode', () => {
           env: createGleanEnv('my-company', 'my-api-token'),
         });
 
-        expect(command).toMatchInlineSnapshot(`"code --add-mcp '{"name":"glean_local","type":"stdio","command":"npx","args":["-y","@gleanwork/local-mcp-server"],"env":{"GLEAN_INSTANCE":"my-company","GLEAN_API_TOKEN":"my-api-token"}}'"`);
+        expect(command).toMatchInlineSnapshot(
+          `"code --add-mcp '{"name":"glean_local","type":"stdio","command":"npx","args":["-y","@gleanwork/local-mcp-server"],"env":{"GLEAN_INSTANCE":"my-company","GLEAN_API_TOKEN":"my-api-token"}}'"`
+        );
       });
     });
 
@@ -131,7 +133,9 @@ describe('Client: vscode', () => {
           headers: createGleanHeaders('my-api-token'),
         });
 
-        expect(command).toMatchInlineSnapshot(`"code --add-mcp '{"name":"glean_default","type":"http","url":"https://my-company-be.glean.com/mcp/default","headers":{"Authorization":"Bearer my-api-token"}}'"`);
+        expect(command).toMatchInlineSnapshot(
+          `"code --add-mcp '{"name":"glean_default","type":"http","url":"https://my-company-be.glean.com/mcp/default","headers":{"Authorization":"Bearer my-api-token"}}'"`
+        );
       });
     });
   });

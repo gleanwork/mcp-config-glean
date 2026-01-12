@@ -119,7 +119,9 @@ describe('Client: cursor', () => {
           env: createGleanEnv('my-company', 'my-api-token'),
         });
 
-        expect(command).toMatchInlineSnapshot(`"npx -y @gleanwork/configure-mcp-server local --client cursor --env GLEAN_INSTANCE=my-company --env GLEAN_API_TOKEN=my-api-token"`);
+        expect(command).toMatchInlineSnapshot(
+          `"npx -y @gleanwork/configure-mcp-server local --client cursor --env GLEAN_INSTANCE=my-company --env GLEAN_API_TOKEN=my-api-token"`
+        );
       });
 
       it('with OAuth (instance only, no token)', () => {
@@ -128,7 +130,9 @@ describe('Client: cursor', () => {
           env: createGleanEnv('my-company'),
         });
 
-        expect(command).toMatchInlineSnapshot(`"npx -y @gleanwork/configure-mcp-server local --client cursor --env GLEAN_INSTANCE=my-company"`);
+        expect(command).toMatchInlineSnapshot(
+          `"npx -y @gleanwork/configure-mcp-server local --client cursor --env GLEAN_INSTANCE=my-company"`
+        );
       });
     });
 
@@ -140,7 +144,9 @@ describe('Client: cursor', () => {
           headers: createGleanHeaders('my-api-token'),
         });
 
-        expect(command).toMatchInlineSnapshot(`"npx -y @gleanwork/configure-mcp-server remote --url https://my-company-be.glean.com/mcp/default --client cursor --token my-api-token"`);
+        expect(command).toMatchInlineSnapshot(
+          `"npx -y @gleanwork/configure-mcp-server remote --url https://my-company-be.glean.com/mcp/default --client cursor --token my-api-token"`
+        );
       });
 
       it('with OAuth (URL only, no token)', () => {
@@ -149,7 +155,9 @@ describe('Client: cursor', () => {
           serverUrl: buildGleanServerUrl('my-company'),
         });
 
-        expect(command).toMatchInlineSnapshot(`"npx -y @gleanwork/configure-mcp-server remote --url https://my-company-be.glean.com/mcp/default --client cursor"`);
+        expect(command).toMatchInlineSnapshot(
+          `"npx -y @gleanwork/configure-mcp-server remote --url https://my-company-be.glean.com/mcp/default --client cursor"`
+        );
       });
     });
   });

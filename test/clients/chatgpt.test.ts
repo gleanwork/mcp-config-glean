@@ -10,7 +10,9 @@ describe('Client: chatgpt (web-based only)', () => {
 
   describe('createBuilder', () => {
     it('throws error because ChatGPT requires web UI configuration', () => {
-      expect(() => registry.createBuilder('chatgpt')).toThrowErrorMatchingInlineSnapshot(`[Error: Cannot create builder for ChatGPT: ChatGPT is web-based and requires configuring MCP servers through their web UI. No local configuration file support.]`);
+      expect(() => registry.createBuilder('chatgpt')).toThrowErrorMatchingInlineSnapshot(
+        `[Error: Cannot create builder for ChatGPT: ChatGPT is web-based and requires configuring MCP servers through their web UI. No local configuration file support.]`
+      );
     });
   });
 });

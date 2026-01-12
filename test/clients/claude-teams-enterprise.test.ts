@@ -11,7 +11,11 @@ describe('Client: claude-teams-enterprise (admin-managed only)', () => {
 
   describe('createBuilder', () => {
     it('throws error because config is admin-managed', () => {
-      expect(() => registry.createBuilder('claude-teams-enterprise')).toThrowErrorMatchingInlineSnapshot(`[Error: Cannot create builder for Claude for Teams/Enterprise: MCP servers are centrally managed by admins. No local configuration support - servers must be configured at the organization level.]`);
+      expect(() =>
+        registry.createBuilder('claude-teams-enterprise')
+      ).toThrowErrorMatchingInlineSnapshot(
+        `[Error: Cannot create builder for Claude for Teams/Enterprise: MCP servers are centrally managed by admins. No local configuration support - servers must be configured at the organization level.]`
+      );
     });
   });
 });
