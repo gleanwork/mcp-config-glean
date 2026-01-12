@@ -4,13 +4,11 @@ import {
   createGleanEnv,
   createGleanHeaders,
   buildGleanServerUrl,
-  GLEAN_ENV,
 } from '../../src/index.js';
 
 /**
  * Claude Code: native CLI client
  * Has native `claude mcp add` command - uses schema's native command generation
- * Our commandBuilder is NOT used for this client
  */
 describe('Client: claude-code', () => {
   const registry = createGleanRegistry();
@@ -24,14 +22,24 @@ describe('Client: claude-code', () => {
           env: createGleanEnv('my-company', 'my-api-token'),
         });
 
-        expect(config).toHaveProperty('mcpServers');
-        const servers = config.mcpServers;
-        const serverConfig = servers[Object.keys(servers)[0]] as Record<string, unknown>;
-        expect(serverConfig.command).toBe('npx');
-        expect(serverConfig.env).toEqual({
-          [GLEAN_ENV.INSTANCE]: 'my-company',
-          [GLEAN_ENV.API_TOKEN]: 'my-api-token',
-        });
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "mcpServers": {
+              "glean_local": {
+                "args": [
+                  "-y",
+                  "@gleanwork/local-mcp-server",
+                ],
+                "command": "npx",
+                "env": {
+                  "GLEAN_API_TOKEN": "my-api-token",
+                  "GLEAN_INSTANCE": "my-company",
+                },
+                "type": "stdio",
+              },
+            },
+          }
+        `);
       });
 
       it('with OAuth (instance only, no token)', () => {
@@ -40,12 +48,23 @@ describe('Client: claude-code', () => {
           env: createGleanEnv('my-company'),
         });
 
-        expect(config).toHaveProperty('mcpServers');
-        const servers = config.mcpServers;
-        const serverConfig = servers[Object.keys(servers)[0]] as Record<string, unknown>;
-        expect(serverConfig.env).toEqual({
-          [GLEAN_ENV.INSTANCE]: 'my-company',
-        });
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "mcpServers": {
+              "glean_local": {
+                "args": [
+                  "-y",
+                  "@gleanwork/local-mcp-server",
+                ],
+                "command": "npx",
+                "env": {
+                  "GLEAN_INSTANCE": "my-company",
+                },
+                "type": "stdio",
+              },
+            },
+          }
+        `);
       });
     });
 
@@ -57,10 +76,19 @@ describe('Client: claude-code', () => {
           headers: createGleanHeaders('my-api-token'),
         });
 
-        expect(config).toHaveProperty('mcpServers');
-        const servers = config.mcpServers;
-        const serverConfig = servers[Object.keys(servers)[0]] as Record<string, unknown>;
-        expect(serverConfig.url).toBe('https://my-company-be.glean.com/mcp/default');
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "mcpServers": {
+              "glean_default": {
+                "headers": {
+                  "Authorization": "Bearer my-api-token",
+                },
+                "type": "http",
+                "url": "https://my-company-be.glean.com/mcp/default",
+              },
+            },
+          }
+        `);
       });
 
       it('with OAuth (URL only, no token)', () => {
@@ -69,46 +97,54 @@ describe('Client: claude-code', () => {
           serverUrl: buildGleanServerUrl('my-company'),
         });
 
-        expect(config).toHaveProperty('mcpServers');
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "mcpServers": {
+              "glean_default": {
+                "type": "http",
+                "url": "https://my-company-be.glean.com/mcp/default",
+              },
+            },
+          }
+        `);
       });
     });
   });
 
   describe('buildCommand (native CLI)', () => {
     describe('stdio transport', () => {
-      it('returns native claude mcp add command', () => {
+      it('with token auth', () => {
         const command = builder.buildCommand({
           transport: 'stdio',
           env: createGleanEnv('my-company', 'my-api-token'),
         });
 
-        expect(command).not.toBeNull();
-        // Native CLI uses 'claude mcp add' command
-        expect(command).toContain('claude mcp add');
-        expect(command).toContain('glean_local');
+        expect(command).toMatchInlineSnapshot(`"claude mcp add glean_local --scope user --env GLEAN_INSTANCE=my-company --env GLEAN_API_TOKEN=my-api-token -- npx -y @gleanwork/local-mcp-server"`);
       });
     });
 
     describe('http transport', () => {
-      it('returns native claude mcp add command with URL', () => {
+      it('with token auth', () => {
         const command = builder.buildCommand({
           transport: 'http',
           serverUrl: buildGleanServerUrl('my-company'),
           headers: createGleanHeaders('my-api-token'),
         });
 
-        expect(command).not.toBeNull();
-        expect(command).toContain('claude mcp add');
-        expect(command).toContain('https://my-company-be.glean.com/mcp/default');
+        expect(command).toMatchInlineSnapshot(`"claude mcp add glean_default https://my-company-be.glean.com/mcp/default --transport http --scope user --header "Authorization: Bearer my-api-token""`);
       });
     });
   });
 
   describe('supportsCliInstallation', () => {
-    it('returns supported with native_cli reason', () => {
+    it('returns status', () => {
       const status = builder.supportsCliInstallation();
-      expect(status.supported).toBe(true);
-      expect(status.reason).toBe('native_cli');
+      expect(status).toMatchInlineSnapshot(`
+        {
+          "reason": "native_cli",
+          "supported": true,
+        }
+      `);
     });
   });
 });

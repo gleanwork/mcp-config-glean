@@ -4,75 +4,102 @@ import {
   createGleanEnv,
   createGleanHeaders,
   buildGleanServerUrl,
-  CLI_INSTALL_REASON,
 } from '../../src/index.js';
 
 /**
- * JetBrains: non-CLI client
- * No configPath - must be configured via IDE UI
- * buildCommand() should return null
- * supportsCliInstallation() should return unsupported with no_config_path reason
+ * JetBrains: IDE-managed client
+ * No CLI installation - configured via IDE UI
+ * buildCommand returns null, but buildConfiguration works for manual paste
  */
-describe('Client: jetbrains (non-CLI)', () => {
+describe('Client: jetbrains', () => {
   const registry = createGleanRegistry();
   const builder = registry.createBuilder('jetbrains');
 
   describe('buildConfiguration', () => {
-    it('stdio generates valid config for manual paste', () => {
-      const config = builder.buildConfiguration({
-        transport: 'stdio',
-        env: createGleanEnv('my-company', 'my-api-token'),
-      });
+    describe('stdio transport', () => {
+      it('with token auth', () => {
+        const config = builder.buildConfiguration({
+          transport: 'stdio',
+          env: createGleanEnv('my-company', 'my-api-token'),
+        });
 
-      expect(config).toHaveProperty('mcpServers');
-      const servers = config.mcpServers;
-      const serverConfig = servers[Object.keys(servers)[0]] as Record<string, unknown>;
-      expect(serverConfig.command).toBe('npx');
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "mcpServers": {
+              "glean_local": {
+                "args": [
+                  "-y",
+                  "@gleanwork/local-mcp-server",
+                ],
+                "command": "npx",
+                "env": {
+                  "GLEAN_API_TOKEN": "my-api-token",
+                  "GLEAN_INSTANCE": "my-company",
+                },
+                "type": "stdio",
+              },
+            },
+          }
+        `);
+      });
     });
 
-    it('http generates valid config for manual paste', () => {
-      const config = builder.buildConfiguration({
-        transport: 'http',
-        serverUrl: buildGleanServerUrl('my-company'),
-        headers: createGleanHeaders('my-api-token'),
-      });
+    describe('http transport', () => {
+      it('with token auth', () => {
+        const config = builder.buildConfiguration({
+          transport: 'http',
+          serverUrl: buildGleanServerUrl('my-company'),
+          headers: createGleanHeaders('my-api-token'),
+        });
 
-      expect(config).toHaveProperty('mcpServers');
-      const servers = config.mcpServers;
-      const serverConfig = servers[Object.keys(servers)[0]] as Record<string, unknown>;
-      expect(serverConfig.url).toBe('https://my-company-be.glean.com/mcp/default');
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "mcpServers": {
+              "glean_default": {
+                "headers": {
+                  "Authorization": "Bearer my-api-token",
+                },
+                "type": "http",
+                "url": "https://my-company-be.glean.com/mcp/default",
+              },
+            },
+          }
+        `);
+      });
     });
   });
 
   describe('buildCommand', () => {
-    it('returns null for stdio transport', () => {
+    it('returns null for stdio', () => {
       const command = builder.buildCommand({
         transport: 'stdio',
         env: createGleanEnv('my-company', 'my-api-token'),
       });
 
-      expect(command).toBeNull();
+      expect(command).toMatchInlineSnapshot(`null`);
     });
 
-    it('returns null for http transport', () => {
+    it('returns null for http', () => {
       const command = builder.buildCommand({
         transport: 'http',
         serverUrl: buildGleanServerUrl('my-company'),
         headers: createGleanHeaders('my-api-token'),
       });
 
-      expect(command).toBeNull();
+      expect(command).toMatchInlineSnapshot(`null`);
     });
   });
 
   describe('supportsCliInstallation', () => {
-    it('returns unsupported with no_config_path reason', () => {
+    it('returns unsupported status', () => {
       const status = builder.supportsCliInstallation();
-      expect(status.supported).toBe(false);
-      if (!status.supported) {
-        expect(status.reason).toBe(CLI_INSTALL_REASON.NO_CONFIG_PATH);
-        expect(status.message).toBeDefined();
-      }
+      expect(status).toMatchInlineSnapshot(`
+        {
+          "message": "JetBrains AI Assistant is configured through IDE settings, not via CLI.",
+          "reason": "no_config_path",
+          "supported": false,
+        }
+      `);
     });
   });
 });

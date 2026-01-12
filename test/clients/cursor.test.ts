@@ -4,7 +4,6 @@ import {
   createGleanEnv,
   createGleanHeaders,
   buildGleanServerUrl,
-  GLEAN_ENV,
 } from '../../src/index.js';
 
 /**
@@ -23,18 +22,24 @@ describe('Client: cursor', () => {
           env: createGleanEnv('my-company', 'my-api-token'),
         });
 
-        expect(config).toHaveProperty('mcpServers');
-        const servers = config.mcpServers;
-        const serverName = Object.keys(servers)[0];
-        expect(serverName).toBe('glean_local');
-
-        const serverConfig = servers[serverName] as Record<string, unknown>;
-        expect(serverConfig.command).toBe('npx');
-        expect(serverConfig.args).toContain('@gleanwork/local-mcp-server');
-        expect(serverConfig.env).toEqual({
-          [GLEAN_ENV.INSTANCE]: 'my-company',
-          [GLEAN_ENV.API_TOKEN]: 'my-api-token',
-        });
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "mcpServers": {
+              "glean_local": {
+                "args": [
+                  "-y",
+                  "@gleanwork/local-mcp-server",
+                ],
+                "command": "npx",
+                "env": {
+                  "GLEAN_API_TOKEN": "my-api-token",
+                  "GLEAN_INSTANCE": "my-company",
+                },
+                "type": "stdio",
+              },
+            },
+          }
+        `);
       });
 
       it('with OAuth (instance only, no token)', () => {
@@ -43,17 +48,23 @@ describe('Client: cursor', () => {
           env: createGleanEnv('my-company'),
         });
 
-        expect(config).toHaveProperty('mcpServers');
-        const servers = config.mcpServers;
-        const serverName = Object.keys(servers)[0];
-        expect(serverName).toBe('glean_local');
-
-        const serverConfig = servers[serverName] as Record<string, unknown>;
-        expect(serverConfig.command).toBe('npx');
-        expect(serverConfig.env).toEqual({
-          [GLEAN_ENV.INSTANCE]: 'my-company',
-        });
-        expect((serverConfig.env as Record<string, string>)[GLEAN_ENV.API_TOKEN]).toBeUndefined();
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "mcpServers": {
+              "glean_local": {
+                "args": [
+                  "-y",
+                  "@gleanwork/local-mcp-server",
+                ],
+                "command": "npx",
+                "env": {
+                  "GLEAN_INSTANCE": "my-company",
+                },
+                "type": "stdio",
+              },
+            },
+          }
+        `);
       });
     });
 
@@ -65,14 +76,19 @@ describe('Client: cursor', () => {
           headers: createGleanHeaders('my-api-token'),
         });
 
-        expect(config).toHaveProperty('mcpServers');
-        const servers = config.mcpServers;
-        const serverName = Object.keys(servers)[0];
-        expect(serverName).toBe('glean_default');
-
-        const serverConfig = servers[serverName] as Record<string, unknown>;
-        expect(serverConfig.url).toBe('https://my-company-be.glean.com/mcp/default');
-        expect(serverConfig.type).toBe('http');
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "mcpServers": {
+              "glean_default": {
+                "headers": {
+                  "Authorization": "Bearer my-api-token",
+                },
+                "type": "http",
+                "url": "https://my-company-be.glean.com/mcp/default",
+              },
+            },
+          }
+        `);
       });
 
       it('with OAuth (URL only, no token)', () => {
@@ -81,82 +97,72 @@ describe('Client: cursor', () => {
           serverUrl: buildGleanServerUrl('my-company'),
         });
 
-        expect(config).toHaveProperty('mcpServers');
-        const servers = config.mcpServers;
-        const serverName = Object.keys(servers)[0];
-        expect(serverName).toBe('glean_default');
-
-        const serverConfig = servers[serverName] as Record<string, unknown>;
-        expect(serverConfig.url).toBe('https://my-company-be.glean.com/mcp/default');
-        expect(serverConfig.type).toBe('http');
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "mcpServers": {
+              "glean_default": {
+                "type": "http",
+                "url": "https://my-company-be.glean.com/mcp/default",
+              },
+            },
+          }
+        `);
       });
     });
   });
 
-  describe('buildCommand (via commandBuilder)', () => {
+  describe('buildCommand', () => {
     describe('stdio transport', () => {
-      it('returns command with env flags', () => {
+      it('with token auth', () => {
         const command = builder.buildCommand({
           transport: 'stdio',
           env: createGleanEnv('my-company', 'my-api-token'),
         });
 
-        expect(command).not.toBeNull();
-        expect(command).toContain('npx -y @gleanwork/configure-mcp-server local');
-        expect(command).toContain('--client cursor');
-        expect(command).toContain('--env GLEAN_INSTANCE=my-company');
-        expect(command).toContain('--env GLEAN_API_TOKEN=my-api-token');
+        expect(command).toMatchInlineSnapshot(`"npx -y @gleanwork/configure-mcp-server local --client cursor --env GLEAN_INSTANCE=my-company --env GLEAN_API_TOKEN=my-api-token"`);
       });
 
-      it('with OAuth (instance only) returns command without token env', () => {
+      it('with OAuth (instance only, no token)', () => {
         const command = builder.buildCommand({
           transport: 'stdio',
           env: createGleanEnv('my-company'),
         });
 
-        expect(command).not.toBeNull();
-        expect(command).toContain('npx -y @gleanwork/configure-mcp-server local');
-        expect(command).toContain('--client cursor');
-        expect(command).toContain('--env GLEAN_INSTANCE=my-company');
-        expect(command).not.toContain('GLEAN_API_TOKEN');
+        expect(command).toMatchInlineSnapshot(`"npx -y @gleanwork/configure-mcp-server local --client cursor --env GLEAN_INSTANCE=my-company"`);
       });
     });
 
     describe('http transport', () => {
-      it('with token includes --token flag', () => {
+      it('with token auth', () => {
         const command = builder.buildCommand({
           transport: 'http',
           serverUrl: buildGleanServerUrl('my-company'),
           headers: createGleanHeaders('my-api-token'),
         });
 
-        expect(command).not.toBeNull();
-        expect(command).toContain('npx -y @gleanwork/configure-mcp-server remote');
-        expect(command).toContain('--url https://my-company-be.glean.com/mcp/default');
-        expect(command).toContain('--client cursor');
-        expect(command).toContain('--token my-api-token');
+        expect(command).toMatchInlineSnapshot(`"npx -y @gleanwork/configure-mcp-server remote --url https://my-company-be.glean.com/mcp/default --client cursor --token my-api-token"`);
       });
 
-      it('with OAuth (no token) returns command without --token flag', () => {
+      it('with OAuth (URL only, no token)', () => {
         const command = builder.buildCommand({
           transport: 'http',
           serverUrl: buildGleanServerUrl('my-company'),
         });
 
-        expect(command).not.toBeNull();
-        expect(command).toContain('npx -y @gleanwork/configure-mcp-server remote');
-        expect(command).toContain('--url https://my-company-be.glean.com/mcp/default');
-        expect(command).toContain('--client cursor');
-        expect(command).not.toContain('--token');
+        expect(command).toMatchInlineSnapshot(`"npx -y @gleanwork/configure-mcp-server remote --url https://my-company-be.glean.com/mcp/default --client cursor"`);
       });
     });
   });
 
   describe('supportsCliInstallation', () => {
-    it('returns supported with command_builder reason', () => {
+    it('returns status', () => {
       const status = builder.supportsCliInstallation();
-      expect(status.supported).toBe(true);
-      expect(status.reason).toBe('command_builder');
+      expect(status).toMatchInlineSnapshot(`
+        {
+          "reason": "command_builder",
+          "supported": true,
+        }
+      `);
     });
   });
 });

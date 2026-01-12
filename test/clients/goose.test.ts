@@ -8,7 +8,6 @@ import {
 
 /**
  * Goose: commandBuilder client (no native CLI)
- * Uses GLEAN_REGISTRY_OPTIONS.commandBuilder for CLI commands
  * Uses { extensions: {...} } format instead of { mcpServers: {...} }
  */
 describe('Client: goose', () => {
@@ -23,12 +22,30 @@ describe('Client: goose', () => {
           env: createGleanEnv('my-company', 'my-api-token'),
         });
 
-        // Goose uses 'extensions' instead of 'mcpServers'
-        expect(config).toHaveProperty('extensions');
-        const extensions = config.extensions;
-        const serverConfig = extensions[Object.keys(extensions)[0]] as Record<string, unknown>;
-        expect(serverConfig.cmd).toBe('npx');
-        expect(serverConfig.type).toBe('stdio');
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "extensions": {
+              "glean_local": {
+                "args": [
+                  "-y",
+                  "@gleanwork/local-mcp-server",
+                ],
+                "bundled": null,
+                "cmd": "npx",
+                "description": null,
+                "enabled": true,
+                "env_keys": [],
+                "envs": {
+                  "GLEAN_API_TOKEN": "my-api-token",
+                  "GLEAN_INSTANCE": "my-company",
+                },
+                "name": "glean_local",
+                "timeout": 300,
+                "type": "stdio",
+              },
+            },
+          }
+        `);
       });
 
       it('with OAuth (instance only, no token)', () => {
@@ -37,7 +54,29 @@ describe('Client: goose', () => {
           env: createGleanEnv('my-company'),
         });
 
-        expect(config).toHaveProperty('extensions');
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "extensions": {
+              "glean_local": {
+                "args": [
+                  "-y",
+                  "@gleanwork/local-mcp-server",
+                ],
+                "bundled": null,
+                "cmd": "npx",
+                "description": null,
+                "enabled": true,
+                "env_keys": [],
+                "envs": {
+                  "GLEAN_INSTANCE": "my-company",
+                },
+                "name": "glean_local",
+                "timeout": 300,
+                "type": "stdio",
+              },
+            },
+          }
+        `);
       });
     });
 
@@ -49,11 +88,27 @@ describe('Client: goose', () => {
           headers: createGleanHeaders('my-api-token'),
         });
 
-        expect(config).toHaveProperty('extensions');
-        const extensions = config.extensions;
-        const serverConfig = extensions[Object.keys(extensions)[0]] as Record<string, unknown>;
-        expect(serverConfig.uri).toBe('https://my-company-be.glean.com/mcp/default');
-        expect(serverConfig.type).toBe('streamable_http');
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "extensions": {
+              "glean_default": {
+                "available_tools": [],
+                "bundled": null,
+                "description": "",
+                "enabled": true,
+                "env_keys": [],
+                "envs": {},
+                "headers": {
+                  "Authorization": "Bearer my-api-token",
+                },
+                "name": "glean_default",
+                "timeout": 300,
+                "type": "streamable_http",
+                "uri": "https://my-company-be.glean.com/mcp/default",
+              },
+            },
+          }
+        `);
       });
 
       it('with OAuth (URL only, no token)', () => {
@@ -62,54 +117,72 @@ describe('Client: goose', () => {
           serverUrl: buildGleanServerUrl('my-company'),
         });
 
-        expect(config).toHaveProperty('extensions');
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "extensions": {
+              "glean_default": {
+                "available_tools": [],
+                "bundled": null,
+                "description": "",
+                "enabled": true,
+                "env_keys": [],
+                "envs": {},
+                "headers": {},
+                "name": "glean_default",
+                "timeout": 300,
+                "type": "streamable_http",
+                "uri": "https://my-company-be.glean.com/mcp/default",
+              },
+            },
+          }
+        `);
       });
     });
   });
 
-  describe('buildCommand (via commandBuilder)', () => {
+  describe('buildCommand', () => {
     describe('stdio transport', () => {
-      it('returns command with env flags', () => {
+      it('with token auth', () => {
         const command = builder.buildCommand({
           transport: 'stdio',
           env: createGleanEnv('my-company', 'my-api-token'),
         });
 
-        expect(command).not.toBeNull();
-        expect(command).toContain('npx -y @gleanwork/configure-mcp-server local');
-        expect(command).toContain('--client goose');
+        expect(command).toMatchInlineSnapshot(`"npx -y @gleanwork/configure-mcp-server local --client goose --env GLEAN_INSTANCE=my-company --env GLEAN_API_TOKEN=my-api-token"`);
       });
     });
 
     describe('http transport', () => {
-      it('with token includes --token flag', () => {
+      it('with token auth', () => {
         const command = builder.buildCommand({
           transport: 'http',
           serverUrl: buildGleanServerUrl('my-company'),
           headers: createGleanHeaders('my-api-token'),
         });
 
-        expect(command).not.toBeNull();
-        expect(command).toContain('--token my-api-token');
+        expect(command).toMatchInlineSnapshot(`"npx -y @gleanwork/configure-mcp-server remote --url https://my-company-be.glean.com/mcp/default --client goose --token my-api-token"`);
       });
 
-      it('with OAuth (no token) returns command without --token flag', () => {
+      it('with OAuth (URL only, no token)', () => {
         const command = builder.buildCommand({
           transport: 'http',
           serverUrl: buildGleanServerUrl('my-company'),
         });
 
-        expect(command).not.toBeNull();
-        expect(command).not.toContain('--token');
+        expect(command).toMatchInlineSnapshot(`"npx -y @gleanwork/configure-mcp-server remote --url https://my-company-be.glean.com/mcp/default --client goose"`);
       });
     });
   });
 
   describe('supportsCliInstallation', () => {
-    it('returns supported with command_builder reason', () => {
+    it('returns status', () => {
       const status = builder.supportsCliInstallation();
-      expect(status.supported).toBe(true);
-      expect(status.reason).toBe('command_builder');
+      expect(status).toMatchInlineSnapshot(`
+        {
+          "reason": "command_builder",
+          "supported": true,
+        }
+      `);
     });
   });
 });

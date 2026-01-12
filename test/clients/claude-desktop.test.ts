@@ -4,12 +4,11 @@ import {
   createGleanEnv,
   createGleanHeaders,
   buildGleanServerUrl,
-  GLEAN_ENV,
 } from '../../src/index.js';
 
 /**
  * Claude Desktop: commandBuilder client (no native CLI)
- * Uses GLEAN_REGISTRY_OPTIONS.commandBuilder for CLI commands
+ * Uses mcp-remote bridge for HTTP transport
  */
 describe('Client: claude-desktop', () => {
   const registry = createGleanRegistry();
@@ -23,18 +22,24 @@ describe('Client: claude-desktop', () => {
           env: createGleanEnv('my-company', 'my-api-token'),
         });
 
-        expect(config).toHaveProperty('mcpServers');
-        const servers = config.mcpServers;
-        const serverName = Object.keys(servers)[0];
-        expect(serverName).toBe('glean_local');
-
-        const serverConfig = servers[serverName] as Record<string, unknown>;
-        expect(serverConfig.command).toBe('npx');
-        expect(serverConfig.args).toContain('@gleanwork/local-mcp-server');
-        expect(serverConfig.env).toEqual({
-          [GLEAN_ENV.INSTANCE]: 'my-company',
-          [GLEAN_ENV.API_TOKEN]: 'my-api-token',
-        });
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "mcpServers": {
+              "glean_local": {
+                "args": [
+                  "-y",
+                  "@gleanwork/local-mcp-server",
+                ],
+                "command": "npx",
+                "env": {
+                  "GLEAN_API_TOKEN": "my-api-token",
+                  "GLEAN_INSTANCE": "my-company",
+                },
+                "type": "stdio",
+              },
+            },
+          }
+        `);
       });
 
       it('with OAuth (instance only, no token)', () => {
@@ -43,17 +48,27 @@ describe('Client: claude-desktop', () => {
           env: createGleanEnv('my-company'),
         });
 
-        expect(config).toHaveProperty('mcpServers');
-        const servers = config.mcpServers;
-        const serverConfig = servers[Object.keys(servers)[0]] as Record<string, unknown>;
-        expect(serverConfig.env).toEqual({
-          [GLEAN_ENV.INSTANCE]: 'my-company',
-        });
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "mcpServers": {
+              "glean_local": {
+                "args": [
+                  "-y",
+                  "@gleanwork/local-mcp-server",
+                ],
+                "command": "npx",
+                "env": {
+                  "GLEAN_INSTANCE": "my-company",
+                },
+                "type": "stdio",
+              },
+            },
+          }
+        `);
       });
     });
 
     describe('http transport (uses mcp-remote bridge)', () => {
-      // Claude Desktop doesn't support HTTP natively - uses mcp-remote as a bridge
       it('with token auth', () => {
         const config = builder.buildConfiguration({
           transport: 'http',
@@ -61,14 +76,23 @@ describe('Client: claude-desktop', () => {
           headers: createGleanHeaders('my-api-token'),
         });
 
-        expect(config).toHaveProperty('mcpServers');
-        const servers = config.mcpServers;
-        const serverConfig = servers[Object.keys(servers)[0]] as Record<string, unknown>;
-        // Uses mcp-remote bridge - generates stdio config wrapping HTTP URL
-        expect(serverConfig.type).toBe('stdio');
-        expect(serverConfig.command).toBe('npx');
-        expect(serverConfig.args).toContain('mcp-remote');
-        expect(serverConfig.args).toContain('https://my-company-be.glean.com/mcp/default');
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "mcpServers": {
+              "glean_default": {
+                "args": [
+                  "-y",
+                  "mcp-remote",
+                  "https://my-company-be.glean.com/mcp/default",
+                  "--header",
+                  "Authorization: Bearer my-api-token",
+                ],
+                "command": "npx",
+                "type": "stdio",
+              },
+            },
+          }
+        `);
       });
 
       it('with OAuth (URL only, no token)', () => {
@@ -77,64 +101,68 @@ describe('Client: claude-desktop', () => {
           serverUrl: buildGleanServerUrl('my-company'),
         });
 
-        expect(config).toHaveProperty('mcpServers');
-        const servers = config.mcpServers;
-        const serverConfig = servers[Object.keys(servers)[0]] as Record<string, unknown>;
-        // Uses mcp-remote bridge
-        expect(serverConfig.command).toBe('npx');
-        expect(serverConfig.args).toContain('mcp-remote');
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "mcpServers": {
+              "glean_default": {
+                "args": [
+                  "-y",
+                  "mcp-remote",
+                  "https://my-company-be.glean.com/mcp/default",
+                ],
+                "command": "npx",
+                "type": "stdio",
+              },
+            },
+          }
+        `);
       });
     });
   });
 
-  describe('buildCommand (via commandBuilder)', () => {
+  describe('buildCommand', () => {
     describe('stdio transport', () => {
-      it('returns command with env flags', () => {
+      it('with token auth', () => {
         const command = builder.buildCommand({
           transport: 'stdio',
           env: createGleanEnv('my-company', 'my-api-token'),
         });
 
-        expect(command).not.toBeNull();
-        expect(command).toContain('npx -y @gleanwork/configure-mcp-server local');
-        expect(command).toContain('--client claude-desktop');
-        expect(command).toContain('--env GLEAN_INSTANCE=my-company');
-        expect(command).toContain('--env GLEAN_API_TOKEN=my-api-token');
+        expect(command).toMatchInlineSnapshot(`"npx -y @gleanwork/configure-mcp-server local --client claude-desktop --env GLEAN_INSTANCE=my-company --env GLEAN_API_TOKEN=my-api-token"`);
       });
     });
 
     describe('http transport', () => {
-      it('with token includes --token flag', () => {
+      it('with token auth', () => {
         const command = builder.buildCommand({
           transport: 'http',
           serverUrl: buildGleanServerUrl('my-company'),
           headers: createGleanHeaders('my-api-token'),
         });
 
-        expect(command).not.toBeNull();
-        expect(command).toContain('npx -y @gleanwork/configure-mcp-server remote');
-        expect(command).toContain('--client claude-desktop');
-        expect(command).toContain('--token my-api-token');
+        expect(command).toMatchInlineSnapshot(`"npx -y @gleanwork/configure-mcp-server remote --url https://my-company-be.glean.com/mcp/default --client claude-desktop --token my-api-token"`);
       });
 
-      it('with OAuth (no token) returns command without --token flag', () => {
+      it('with OAuth (URL only, no token)', () => {
         const command = builder.buildCommand({
           transport: 'http',
           serverUrl: buildGleanServerUrl('my-company'),
         });
 
-        expect(command).not.toBeNull();
-        expect(command).toContain('npx -y @gleanwork/configure-mcp-server remote');
-        expect(command).not.toContain('--token');
+        expect(command).toMatchInlineSnapshot(`"npx -y @gleanwork/configure-mcp-server remote --url https://my-company-be.glean.com/mcp/default --client claude-desktop"`);
       });
     });
   });
 
   describe('supportsCliInstallation', () => {
-    it('returns supported with command_builder reason', () => {
+    it('returns status', () => {
       const status = builder.supportsCliInstallation();
-      expect(status.supported).toBe(true);
-      expect(status.reason).toBe('command_builder');
+      expect(status).toMatchInlineSnapshot(`
+        {
+          "reason": "command_builder",
+          "supported": true,
+        }
+      `);
     });
   });
 });

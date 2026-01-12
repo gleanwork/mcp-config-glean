@@ -8,13 +8,8 @@ import {
 
 /**
  * Gemini: commandBuilder client
- *
- * NOTE: Gemini has a native `gemini mcp add` command, but mcp-config-schema
- * currently uses GenericConfigBuilder which doesn't support native CLI.
- * This is tracked as a mcp-config-schema issue.
- *
- * For now, Gemini uses GLEAN_REGISTRY_OPTIONS.commandBuilder for CLI commands.
- * Gemini uses httpUrl instead of url for HTTP transport.
+ * Uses httpUrl instead of url for HTTP transport
+ * NOTE: Gemini has native `gemini mcp add` but schema uses GenericConfigBuilder
  */
 describe('Client: gemini', () => {
   const registry = createGleanRegistry();
@@ -28,10 +23,23 @@ describe('Client: gemini', () => {
           env: createGleanEnv('my-company', 'my-api-token'),
         });
 
-        expect(config).toHaveProperty('mcpServers');
-        const servers = config.mcpServers;
-        const serverConfig = servers[Object.keys(servers)[0]] as Record<string, unknown>;
-        expect(serverConfig.command).toBe('npx');
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "mcpServers": {
+              "glean_local": {
+                "args": [
+                  "-y",
+                  "@gleanwork/local-mcp-server",
+                ],
+                "command": "npx",
+                "env": {
+                  "GLEAN_API_TOKEN": "my-api-token",
+                  "GLEAN_INSTANCE": "my-company",
+                },
+              },
+            },
+          }
+        `);
       });
 
       it('with OAuth (instance only, no token)', () => {
@@ -40,7 +48,22 @@ describe('Client: gemini', () => {
           env: createGleanEnv('my-company'),
         });
 
-        expect(config).toHaveProperty('mcpServers');
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "mcpServers": {
+              "glean_local": {
+                "args": [
+                  "-y",
+                  "@gleanwork/local-mcp-server",
+                ],
+                "command": "npx",
+                "env": {
+                  "GLEAN_INSTANCE": "my-company",
+                },
+              },
+            },
+          }
+        `);
       });
     });
 
@@ -52,12 +75,18 @@ describe('Client: gemini', () => {
           headers: createGleanHeaders('my-api-token'),
         });
 
-        expect(config).toHaveProperty('mcpServers');
-        const servers = config.mcpServers;
-        const serverConfig = servers[Object.keys(servers)[0]] as Record<string, unknown>;
-        // Gemini uses 'httpUrl' instead of 'url'
-        expect(serverConfig.httpUrl).toBe('https://my-company-be.glean.com/mcp/default');
-        expect(serverConfig.headers).toEqual({ Authorization: 'Bearer my-api-token' });
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "mcpServers": {
+              "glean_default": {
+                "headers": {
+                  "Authorization": "Bearer my-api-token",
+                },
+                "httpUrl": "https://my-company-be.glean.com/mcp/default",
+              },
+            },
+          }
+        `);
       });
 
       it('with OAuth (URL only, no token)', () => {
@@ -66,57 +95,62 @@ describe('Client: gemini', () => {
           serverUrl: buildGleanServerUrl('my-company'),
         });
 
-        expect(config).toHaveProperty('mcpServers');
-        const servers = config.mcpServers;
-        const serverConfig = servers[Object.keys(servers)[0]] as Record<string, unknown>;
-        expect(serverConfig.httpUrl).toBe('https://my-company-be.glean.com/mcp/default');
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "mcpServers": {
+              "glean_default": {
+                "httpUrl": "https://my-company-be.glean.com/mcp/default",
+              },
+            },
+          }
+        `);
       });
     });
   });
 
-  describe('buildCommand (via commandBuilder)', () => {
+  describe('buildCommand', () => {
     describe('stdio transport', () => {
-      it('returns command with env flags', () => {
+      it('with token auth', () => {
         const command = builder.buildCommand({
           transport: 'stdio',
           env: createGleanEnv('my-company', 'my-api-token'),
         });
 
-        expect(command).not.toBeNull();
-        expect(command).toContain('npx -y @gleanwork/configure-mcp-server local');
-        expect(command).toContain('--client gemini');
+        expect(command).toMatchInlineSnapshot(`"npx -y @gleanwork/configure-mcp-server local --client gemini --env GLEAN_INSTANCE=my-company --env GLEAN_API_TOKEN=my-api-token"`);
       });
     });
 
     describe('http transport', () => {
-      it('with token includes --token flag', () => {
+      it('with token auth', () => {
         const command = builder.buildCommand({
           transport: 'http',
           serverUrl: buildGleanServerUrl('my-company'),
           headers: createGleanHeaders('my-api-token'),
         });
 
-        expect(command).not.toBeNull();
-        expect(command).toContain('--token my-api-token');
+        expect(command).toMatchInlineSnapshot(`"npx -y @gleanwork/configure-mcp-server remote --url https://my-company-be.glean.com/mcp/default --client gemini --token my-api-token"`);
       });
 
-      it('with OAuth (no token) returns command without --token flag', () => {
+      it('with OAuth (URL only, no token)', () => {
         const command = builder.buildCommand({
           transport: 'http',
           serverUrl: buildGleanServerUrl('my-company'),
         });
 
-        expect(command).not.toBeNull();
-        expect(command).not.toContain('--token');
+        expect(command).toMatchInlineSnapshot(`"npx -y @gleanwork/configure-mcp-server remote --url https://my-company-be.glean.com/mcp/default --client gemini"`);
       });
     });
   });
 
   describe('supportsCliInstallation', () => {
-    it('returns supported with command_builder reason', () => {
+    it('returns status', () => {
       const status = builder.supportsCliInstallation();
-      expect(status.supported).toBe(true);
-      expect(status.reason).toBe('command_builder');
+      expect(status).toMatchInlineSnapshot(`
+        {
+          "reason": "command_builder",
+          "supported": true,
+        }
+      `);
     });
   });
 });
