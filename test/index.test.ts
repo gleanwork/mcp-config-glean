@@ -33,6 +33,17 @@ describe('@gleanwork/mcp-config', () => {
       );
     });
 
+    it('commandBuilder http includes token from Authorization header', () => {
+      const command = GLEAN_REGISTRY_OPTIONS.commandBuilder?.http?.('cursor', {
+        transport: 'http',
+        serverUrl: 'https://example.com/mcp/default',
+        headers: { Authorization: 'Bearer my-secret-token' },
+      });
+      expect(command).toBe(
+        'npx -y @gleanwork/configure-mcp-server remote --url https://example.com/mcp/default --client cursor --token my-secret-token'
+      );
+    });
+
     it('has commandBuilder for stdio transport', () => {
       expect(GLEAN_REGISTRY_OPTIONS.commandBuilder?.stdio).toBeDefined();
 

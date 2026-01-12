@@ -16,7 +16,17 @@ export const GLEAN_REGISTRY_OPTIONS: RegistryOptions = {
   commandBuilder: {
     http: (clientId, options) => {
       if (!options.serverUrl) return null;
-      return `npx -y @gleanwork/configure-mcp-server remote --url ${options.serverUrl} --client ${clientId}`;
+
+      let command = `npx -y @gleanwork/configure-mcp-server remote --url ${options.serverUrl} --client ${clientId}`;
+
+      // Extract token from Authorization header if present
+      const authHeader = options.headers?.['Authorization'];
+      if (authHeader?.startsWith('Bearer ')) {
+        const token = authHeader.slice(7);
+        command += ` --token ${token}`;
+      }
+
+      return command;
     },
     stdio: (clientId, options) => {
       const envFlags = Object.entries(options.env || {})
