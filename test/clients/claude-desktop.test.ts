@@ -128,9 +128,16 @@ describe('Client: claude-desktop', () => {
           env: createGleanEnv('my-company', 'my-api-token'),
         });
 
-        expect(command).toMatchInlineSnapshot(
-          `"npx -y @gleanwork/configure-mcp-server local --client claude-desktop --env GLEAN_INSTANCE=my-company --env GLEAN_API_TOKEN=my-api-token"`
-        );
+        expect(command).toMatchInlineSnapshot(`"npx -y @gleanwork/configure-mcp-server local --client claude-desktop --env GLEAN_INSTANCE=my-company --env GLEAN_API_TOKEN=my-api-token"`);
+      });
+
+      it('with OAuth (instance only, no token)', () => {
+        const command = builder.buildCommand({
+          transport: 'stdio',
+          env: createGleanEnv('my-company'),
+        });
+
+        expect(command).toMatchInlineSnapshot(`"npx -y @gleanwork/configure-mcp-server local --client claude-desktop --env GLEAN_INSTANCE=my-company"`);
       });
     });
 
@@ -142,9 +149,7 @@ describe('Client: claude-desktop', () => {
           headers: createGleanHeaders('my-api-token'),
         });
 
-        expect(command).toMatchInlineSnapshot(
-          `"npx -y @gleanwork/configure-mcp-server remote --url https://my-company-be.glean.com/mcp/default --client claude-desktop --token my-api-token"`
-        );
+        expect(command).toMatchInlineSnapshot(`"npx -y @gleanwork/configure-mcp-server remote --url https://my-company-be.glean.com/mcp/default --client claude-desktop --token my-api-token"`);
       });
 
       it('with OAuth (URL only, no token)', () => {
@@ -153,9 +158,7 @@ describe('Client: claude-desktop', () => {
           serverUrl: buildGleanServerUrl('my-company'),
         });
 
-        expect(command).toMatchInlineSnapshot(
-          `"npx -y @gleanwork/configure-mcp-server remote --url https://my-company-be.glean.com/mcp/default --client claude-desktop"`
-        );
+        expect(command).toMatchInlineSnapshot(`"npx -y @gleanwork/configure-mcp-server remote --url https://my-company-be.glean.com/mcp/default --client claude-desktop"`);
       });
     });
   });

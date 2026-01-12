@@ -9,7 +9,7 @@ import {
 /**
  * JetBrains: IDE-managed client
  * No CLI installation - configured via IDE UI
- * buildCommand returns null, but buildConfiguration works for manual paste
+ * buildCommand returns null for all cases
  */
 describe('Client: jetbrains', () => {
   const registry = createGleanRegistry();
@@ -42,6 +42,31 @@ describe('Client: jetbrains', () => {
           }
         `);
       });
+
+      it('with OAuth (instance only, no token)', () => {
+        const config = builder.buildConfiguration({
+          transport: 'stdio',
+          env: createGleanEnv('my-company'),
+        });
+
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "mcpServers": {
+              "glean_local": {
+                "args": [
+                  "-y",
+                  "@gleanwork/local-mcp-server",
+                ],
+                "command": "npx",
+                "env": {
+                  "GLEAN_INSTANCE": "my-company",
+                },
+                "type": "stdio",
+              },
+            },
+          }
+        `);
+      });
     });
 
     describe('http transport', () => {
@@ -66,27 +91,67 @@ describe('Client: jetbrains', () => {
           }
         `);
       });
+
+      it('with OAuth (URL only, no token)', () => {
+        const config = builder.buildConfiguration({
+          transport: 'http',
+          serverUrl: buildGleanServerUrl('my-company'),
+        });
+
+        expect(config).toMatchInlineSnapshot(`
+          {
+            "mcpServers": {
+              "glean_default": {
+                "type": "http",
+                "url": "https://my-company-be.glean.com/mcp/default",
+              },
+            },
+          }
+        `);
+      });
     });
   });
 
   describe('buildCommand', () => {
-    it('returns null for stdio', () => {
-      const command = builder.buildCommand({
-        transport: 'stdio',
-        env: createGleanEnv('my-company', 'my-api-token'),
+    describe('stdio transport', () => {
+      it('with token auth returns null', () => {
+        const command = builder.buildCommand({
+          transport: 'stdio',
+          env: createGleanEnv('my-company', 'my-api-token'),
+        });
+
+        expect(command).toMatchInlineSnapshot(`null`);
       });
 
-      expect(command).toMatchInlineSnapshot(`null`);
+      it('with OAuth returns null', () => {
+        const command = builder.buildCommand({
+          transport: 'stdio',
+          env: createGleanEnv('my-company'),
+        });
+
+        expect(command).toMatchInlineSnapshot(`null`);
+      });
     });
 
-    it('returns null for http', () => {
-      const command = builder.buildCommand({
-        transport: 'http',
-        serverUrl: buildGleanServerUrl('my-company'),
-        headers: createGleanHeaders('my-api-token'),
+    describe('http transport', () => {
+      it('with token auth returns null', () => {
+        const command = builder.buildCommand({
+          transport: 'http',
+          serverUrl: buildGleanServerUrl('my-company'),
+          headers: createGleanHeaders('my-api-token'),
+        });
+
+        expect(command).toMatchInlineSnapshot(`null`);
       });
 
-      expect(command).toMatchInlineSnapshot(`null`);
+      it('with OAuth returns null', () => {
+        const command = builder.buildCommand({
+          transport: 'http',
+          serverUrl: buildGleanServerUrl('my-company'),
+        });
+
+        expect(command).toMatchInlineSnapshot(`null`);
+      });
     });
   });
 
