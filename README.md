@@ -1,4 +1,18 @@
-# @gleanwork/mcp-config
+# @gleanwork/mcp-config-glean
+
+> [!WARNING]
+> **This repository has been archived.**
+>
+> This package has been consolidated into [`@gleanwork/mcp-config`](https://github.com/gleanwork/mcp-config-schema), which now includes all functionality from both `@gleanwork/mcp-config-schema` and this package.
+>
+> **To migrate:**
+>
+> ```bash
+> npm uninstall @gleanwork/mcp-config-glean
+> npm install @gleanwork/mcp-config
+> ```
+
+---
 
 Glean-specific MCP configuration defaults and helpers. Wraps `@gleanwork/mcp-config-schema` with Glean-specific constants and convenience functions.
 
